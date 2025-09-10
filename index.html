@@ -2,10 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Excel Search</title>
+  <title>Excel Search Tool</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     body { font-family: Arial; margin: 20px; }
+    input[type="file"] { margin-bottom: 10px; }
     input[type="text"] { padding: 5px; width: 300px; }
     button { padding: 5px 10px; margin-left: 10px; }
     table { border-collapse: collapse; margin-top: 20px; width: 100%; }
@@ -17,7 +18,7 @@
 <body>
   <h1>Excel Search Tool</h1>
 
-  <p>Upload Excel files (or leave blank if you load from repo)</p>
+  <p>Upload up to 3 Excel files:</p>
   <input type="file" id="file1" /> 
   <input type="file" id="file2" /> 
   <input type="file" id="file3" /><br><br>
@@ -28,9 +29,9 @@
   <div id="results"></div>
 
   <script>
-    let datasets = []; // store parsed Excel files
+    let datasets = []; // store uploaded Excel files
 
-    // Load uploaded files
+    // Handle file uploads
     function handleFile(fileInput, index) {
       const file = fileInput.files[0];
       if (!file) return;
@@ -50,26 +51,25 @@
     document.getElementById("file2").addEventListener("change", e => handleFile(e.target, 1));
     document.getElementById("file3").addEventListener("change", e => handleFile(e.target, 2));
 
+    // Search function (matches all keywords)
     function searchData() {
       const input = document.getElementById("search").value.toLowerCase().trim();
-      const keywords = input.split(/\s+/).filter(k => k); // split by spaces
+      const keywords = input.split(/\s+/).filter(k => k); // split keywords by space
       document.getElementById("results").innerHTML = ""; // clear old results
 
       datasets.forEach((ds, i) => {
         if (!ds || !ds.data) return;
         let matches = ds.data.filter(row => {
-         // Convert all cell values to strings, lowercase
-            const rowText = Object.values(row)
-           .map(v => (v === null || v === undefined) ? "" : String(v).toLowerCase())
-           .join(" ");
-         // Match ALL keywords
-        return keywords.every(kw => rowText.includes(kw));
-       });
-       renderTable(i, matches, keywords);
-     });
-   }
+          const rowText = Object.values(row)
+            .map(v => (v === null || v === undefined) ? "" : String(v).toLowerCase())
+            .join(" ");
+          return keywords.every(kw => rowText.includes(kw)); // match ALL keywords
+        });
+        renderTable(i, matches, keywords);
+      });
+    }
 
-
+    // Render table for a dataset
     function renderTable(index, rows, keywords) {
       const container = document.getElementById("results");
       const ds = datasets[index];
@@ -85,7 +85,7 @@
       rows.forEach(row => {
         html += "<tr>";
         Object.values(row).forEach(v => {
-          let cell = String(v);
+          let cell = (v === null || v === undefined) ? "" : String(v);
           keywords.forEach(kw => {
             let regex = new RegExp(`(${kw})`, "gi");
             cell = cell.replace(regex, "<mark>$1</mark>");
