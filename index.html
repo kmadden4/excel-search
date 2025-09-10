@@ -1,0 +1,19 @@
+// List of Excel files in the same repo
+const excelFiles = ["file1.xlsx", "file2.xlsx", "file3.xlsx"];
+
+function loadExcelFiles() {
+  excelFiles.forEach((filename, index) => {
+    fetch(filename)
+      .then(res => res.arrayBuffer())
+      .then(data => {
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(firstSheet, { defval: "" });
+        datasets[index] = { name: filename, data: jsonData };
+        renderTable(index, jsonData, []); // show full table initially
+      });
+  });
+}
+
+// Call this on page load
+window.onload = loadExcelFiles;
